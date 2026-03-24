@@ -99,47 +99,47 @@ python scripts/tb_worktime.py fill-weekly-planned \
 
 多人时用逗号分隔：`--users "王芳,陈浩,刘洋"`
 
-### 2. 填写实际工时
+### 2. 填写实际工时（默认按计划工时填报）
 
-**典型输入格式：**
-```
-请帮{人名}填写今天的实际工时，{项目名}-{任务名} 实际投入X小时
-```
+**核心规则：用户说"填实际工时"、"补实际工时"但未指定具体工时数时，直接调用 `fill-actual-from-planned`，无需询问任务或工时。**
 
-**单任务单天：**
+自动从 Teambition 读取该用户的计划工时，对尚未填写实际工时的条目逐一填报，已有记录则跳过。**结束日期自动 cap 到今天**，不会填写未来日期的实际工时。
+
+**典型触发场景：**
+- "帮黄超补充下实际工时" → 直接用本周
+- "帮李明填本周实际工时" → 直接用本周
+- "帮王芳补上周的实际工时" → 计算上周日期范围
+
 ```bash
+# 本周实际工时（最常用）
+python scripts/tb_worktime.py fill-actual-from-planned \
+  --users "李明" \
+  --week current
+
+# 指定日期范围
+python scripts/tb_worktime.py fill-actual-from-planned \
+  --users "李明" \
+  --start 2026-03-16 --end 2026-03-20
+```
+
+**仅当用户明确指定了任务和工时数时**，才使用 `fill-range-actual` 或 `log-actual`：
+
+```bash
+# 用户明确说"X任务填Y小时"
 python scripts/tb_worktime.py log-actual \
   --user "李明" \
   --task-key "技术中台项目-平台日常管理" \
   --hours 1 \
   --date 2026-03-24
-```
 
-**多任务单天（推荐用 fill-range-actual，start=end=当天）：**
-> 帮我填写今天的实际工时，技术中台项目-平台日常管理 实际投入1小时；技术中台项目-基础设施运维 实际投入0.5小时
-
-```bash
+# 用户指定多任务+具体工时
 python scripts/tb_worktime.py fill-range-actual \
   --users "李明" \
   --tasks "技术中台项目-平台日常管理:1,技术中台项目-基础设施运维:0.5" \
   --start 2026-03-24 --end 2026-03-24
 ```
 
-### 3. 填写本周实际工时（fill-weekly-actual）
-
-**典型场景：**
-> 帮李明填写本周每天的实际工时，技术中台项目-平台日常管理 每天1小时
-
-```bash
-python scripts/tb_worktime.py fill-weekly-actual \
-  --users "李明" \
-  --tasks "技术中台项目-平台日常管理:1" \
-  --week current
-```
-
-`--week` 同 `fill-weekly-planned`，支持 `current`、`next`、`YYYY-MM-DD`。
-
-### 4. 批量填写实际工时（按日期范围）
+### 3. 批量填写实际工时（按日期范围，指定工时）
 
 **示例：**
 > 帮李明补填上周一到周五的实际工时，技术中台项目-平台日常管理 每天1小时

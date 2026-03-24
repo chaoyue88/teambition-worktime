@@ -971,11 +971,14 @@ def main():
 
     elif args.action == "fill-actual-from-planned":
         user_names = [n.strip() for n in args.users.split(",")]
+        today = date.today().isoformat()
         if hasattr(args, "start") and args.start and hasattr(args, "end") and args.end:
-            mgr.fill_actual_from_planned(user_names, args.start, args.end)
+            end = min(args.end, today)
+            mgr.fill_actual_from_planned(user_names, args.start, end)
         else:
             weekdays = get_weekdays(args.week)
-            mgr.fill_actual_from_planned(user_names, weekdays[0], weekdays[-1])
+            end = min(weekdays[-1], today)
+            mgr.fill_actual_from_planned(user_names, weekdays[0], end)
 
     elif args.action == "set-planned":
         task_id = mgr.resolve_task(args.task_key)
