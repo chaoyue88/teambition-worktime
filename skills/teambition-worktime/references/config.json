@@ -1,0 +1,17 @@
+{
+  "app_id": "YOUR_APP_ID",
+  "app_secret": "YOUR_APP_SECRET",
+  "organization_id": "YOUR_ORG_ID",
+  "api_base": "https://open.teambition.com",
+  "default_user_id": "",
+  "users": {
+    "张三": "USER_ID_1",
+    "李四": "USER_ID_2"
+  },
+  "projects": {
+    "示例项目": "PROJECT_ID_1"
+  },
+  "tasks": {
+    "示例项目-日常管理": "TASK_ID_1"
+  }
+}

@@ -25,6 +25,10 @@ except ImportError:
 CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".teambition")
 CONFIG_FILE = "config.json"
 
+# skill 内置配置路径：scripts/ 的上级目录下的 references/config.json
+_SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BUILTIN_CONFIG = os.path.join(_SKILL_DIR, "references", "config.json")
+
 
 def init_config_dir():
     """创建配置目录并设置权限（仅所有者可读写）"""
@@ -34,36 +38,69 @@ def init_config_dir():
     return CONFIG_DIR
 
 
+def _merge_config(base: dict, override: dict) -> dict:
+    """
+    将 override 合并到 base，返回新 dict。
+    users/projects/tasks 等字典型字段做浅合并（override 优先），其余字段直接覆盖。
+    """
+    result = dict(base)
+    for k, v in override.items():
+        if k in result and isinstance(result[k], dict) and isinstance(v, dict):
+            result[k] = {**result[k], **v}
+        else:
+            result[k] = v
+    return result
+
+
 def load_config(config_path: str = None) -> dict:
-    """加载配置文件"""
-    # 搜索顺序：指定路径 → ~/.teambition/config.json → 当前目录
-    search_paths = []
+    """
+    加载配置，支持内置配置 + 用户配置两层叠加。
+
+    加载顺序（后者覆盖前者）：
+      1. skill 内置配置：references/config.json（可选）
+      2. 用户配置：指定路径 → ~/.teambition/config.json → 当前目录
+
+    users/projects/tasks 字典做合并，其余字段直接覆盖。
+    """
+    # 第一层：内置配置
+    config = {}
+    if os.path.exists(BUILTIN_CONFIG):
+        with open(BUILTIN_CONFIG, "r", encoding="utf-8") as f:
+            config = json.load(f)
+
+    # 第二层：用户配置（可选）
+    user_paths = []
     if config_path:
-        search_paths.append(config_path)
-    search_paths += [
+        user_paths.append(config_path)
+    user_paths += [
         os.path.join(CONFIG_DIR, CONFIG_FILE),
         os.path.join(os.getcwd(), "tb-worktime-config.json"),
     ]
-    
-    for p in search_paths:
+
+    for p in user_paths:
         if os.path.exists(p):
             with open(p, "r", encoding="utf-8") as f:
-                config = json.load(f)
-            # 基本校验
-            required = ["app_id", "app_secret", "organization_id"]
-            missing = [k for k in required if not config.get(k)]
-            if missing:
-                print(f"配置文件缺少必填字段: {', '.join(missing)}")
-                sys.exit(1)
-            config.setdefault("api_base", "https://open.teambition.com")
-            return config
-    
-    print(f"找不到配置文件，搜索过以下位置：")
-    for p in search_paths:
-        print(f"  - {p}")
-    print(f"\n推荐放在 {os.path.join(CONFIG_DIR, CONFIG_FILE)}")
-    print("参考 references/setup-guide.md 创建配置")
-    sys.exit(1)
+                user_cfg = json.load(f)
+            config = _merge_config(config, user_cfg)
+            break  # 只取第一个找到的用户配置
+
+    if not config:
+        print("找不到配置文件，搜索过以下位置：")
+        for p in [BUILTIN_CONFIG] + user_paths:
+            print(f"  - {p}")
+        print(f"\n推荐放在 {os.path.join(CONFIG_DIR, CONFIG_FILE)}")
+        print("参考 references/setup-guide.md 创建配置")
+        sys.exit(1)
+
+    # 基本校验
+    required = ["app_id", "app_secret", "organization_id"]
+    missing = [k for k in required if not config.get(k)]
+    if missing:
+        print(f"配置文件缺少必填字段: {', '.join(missing)}")
+        sys.exit(1)
+
+    config.setdefault("api_base", "https://open.teambition.com")
+    return config
 
 
 def get_app_token(app_id: str, app_secret: str, ttl: int = 3600) -> str:
