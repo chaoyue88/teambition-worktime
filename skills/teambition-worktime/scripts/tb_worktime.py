@@ -894,6 +894,8 @@ def main():
     p_afp.add_argument("--week", default="current", help="current/next/YYYY-MM-DD，默认本周")
     p_afp.add_argument("--start", help="开始日期 YYYY-MM-DD（与 --end 配合替代 --week）")
     p_afp.add_argument("--end", help="结束日期 YYYY-MM-DD")
+    p_afp.add_argument("--include-today", action="store_true",
+                        help="结束日期 cap 到今天（默认 cap 到昨天）")
 
     # 按日期范围填写实际工时
     p3 = sub.add_parser("fill-range-actual", help="按日期范围填写实际工时")
@@ -971,13 +973,14 @@ def main():
 
     elif args.action == "fill-actual-from-planned":
         user_names = [n.strip() for n in args.users.split(",")]
-        today = date.today().isoformat()
+        include_today = getattr(args, "include_today", False)
+        cap_date = date.today().isoformat() if include_today else (date.today() - timedelta(days=1)).isoformat()
         if hasattr(args, "start") and args.start and hasattr(args, "end") and args.end:
-            end = min(args.end, today)
+            end = min(args.end, cap_date)
             mgr.fill_actual_from_planned(user_names, args.start, end)
         else:
             weekdays = get_weekdays(args.week)
-            end = min(weekdays[-1], today)
+            end = min(weekdays[-1], cap_date)
             mgr.fill_actual_from_planned(user_names, weekdays[0], end)
 
     elif args.action == "set-planned":

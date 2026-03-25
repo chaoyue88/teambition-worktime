@@ -107,18 +107,37 @@ python scripts/tb_worktime.py fill-weekly-planned \
 
 **核心规则：用户说"填实际工时"、"补实际工时"但未指定具体工时数时，直接调用 `fill-actual-from-planned`，无需询问任务或工时。**
 
-自动从 Teambition 读取该用户的计划工时，对尚未填写实际工时的条目逐一填报，已有记录则跳过。**结束日期自动 cap 到今天**，不会填写未来日期的实际工时。
+自动从 Teambition 读取该用户的计划工时，对尚未填写实际工时的条目逐一填报，已有记录则跳过。
+
+**默认日期规则（重要）：**
+- **未指定日期时，默认只填前一天（昨天）**，即 `--start <昨天> --end <昨天>`
+- 用户明确说"本周"、"这周"时，才使用 `--week current`（结束日期自动 cap 到昨天）
+- 用户明确说"今天"、"包括今天"、"填到今天"时，才加 `--include-today` 将结束日期 cap 到今天
+- 不会填写今天或未来日期的实际工时（除非明确要求）
 
 **典型触发场景：**
-- "帮黄超补充下实际工时" → 直接用本周
-- "帮李明填本周实际工时" → 直接用本周
+- "帮黄超补充下实际工时" → 只填昨天（`--start <昨天> --end <昨天>`）
+- "帮李明补昨天的实际工时" → 只填昨天
+- "帮李明填本周实际工时" → 本周，结束日期 cap 到昨天（`--week current`）
 - "帮王芳补上周的实际工时" → 计算上周日期范围
+- "帮李明填本周实际工时，包括今天" → 加 `--include-today`，结束日期 cap 到今天
 
 ```bash
-# 本周实际工时（最常用）
+# 默认：只填昨天（最常用）
+python scripts/tb_worktime.py fill-actual-from-planned \
+  --users "李明" \
+  --start 2026-03-24 --end 2026-03-24
+
+# 明确要求本周（到昨天）
 python scripts/tb_worktime.py fill-actual-from-planned \
   --users "李明" \
   --week current
+
+# 明确要求填到今天
+python scripts/tb_worktime.py fill-actual-from-planned \
+  --users "李明" \
+  --week current \
+  --include-today
 
 # 指定日期范围
 python scripts/tb_worktime.py fill-actual-from-planned \
