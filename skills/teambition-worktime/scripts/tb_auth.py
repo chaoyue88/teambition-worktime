@@ -2,6 +2,8 @@
 """
 Teambition 认证模块
 通过 JWT 签名生成 appAccessToken，用于调用 Teambition 开放平台 API。
+
+Author: Sam <772662699@qq.com>
 """
 
 import json

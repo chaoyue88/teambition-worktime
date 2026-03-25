@@ -2,6 +2,8 @@
 """
 Teambition 本地缓存模块
 缓存用户、项目、任务列表，支持模糊搜索和自动过期。
+
+Author: Sam <772662699@qq.com>
 """
 
 import argparse

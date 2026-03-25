@@ -2,6 +2,8 @@
 """
 Teambition 工时操作模块
 支持计划工时（按周填报）、实际工时记录、查询、批量填报等功能。
+
+Author: Sam <772662699@qq.com>
 """
 
 import argparse
