@@ -1006,8 +1006,7 @@ def main():
 
     elif args.action == "fill-actual-from-planned":
         user_names = [n.strip() for n in args.users.split(",")]
-        include_today = getattr(args, "include_today", False)
-        cap_date = date.today().isoformat() if include_today else (date.today() - timedelta(days=1)).isoformat()
+        cap_date = date.today().isoformat()
         if hasattr(args, "start") and args.start and hasattr(args, "end") and args.end:
             end = min(args.end, cap_date)
             mgr.fill_actual_from_planned(user_names, args.start, end)
