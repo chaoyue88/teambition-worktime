@@ -154,12 +154,13 @@ python scripts/tb_worktime.py log-actual \
   --user "李明" \
   --task-key "技术中台项目-平台日常管理" \
   --hours 1 \
-  --date 2026-03-24
+  --date 2026-03-24 \
+  --desc "需求开发和问题跟进"
 
-# 用户指定多任务+具体工时
+# 用户指定多任务+具体工时（含工作进展）
 python scripts/tb_worktime.py fill-range-actual \
   --users "李明" \
-  --tasks "技术中台项目-平台日常管理:1,技术中台项目-基础设施运维:0.5" \
+  --tasks "技术中台项目-平台日常管理:1:需求开发和问题跟进,技术中台项目-基础设施运维:0.5" \
   --start 2026-03-24 --end 2026-03-24
 ```
 
@@ -246,5 +247,6 @@ python scripts/tb_cache.py refresh --type all
 - 计划工时一般周一填写当周的；实际工时一般当天结束或隔天填写
 - 同一天填写多个任务的实际工时，用 `fill-range-actual --start DATE --end DATE` 比多次 `log-actual` 更简洁
 - 实际工时（worktime）创建前会自动检查同用户同任务同日是否已存在记录，已存在则跳过（避免重复）
+- **工作进展（description）**：实际工时提交时会附带工作描述。`fill-actual-from-planned` 自动用任务名作为描述；`fill-range-actual`/`log-actual` 支持在 `--tasks` 中用第三段指定进展（格式 `任务名:工时:进展`），未指定时自动用任务名代替。如用户提供了进展描述，应将其传入对应字段
 - 任务名在 Teambition 改动后，脚本会自动刷新缓存重新搜索；若仍找不到，会打印该项目下的任务列表供参考
 - 首次使用建议先用测试任务验证配置

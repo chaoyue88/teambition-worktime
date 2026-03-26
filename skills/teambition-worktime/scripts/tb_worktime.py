@@ -581,6 +581,7 @@ class WorktimeManager:
                     continue
 
                 hours = entry["hours"]
+                description = entry.get("progress") or entry["key"]
                 for day in dates:
                     try:
                         self.log_actual_hours(
@@ -588,7 +589,7 @@ class WorktimeManager:
                             hours=hours,
                             user_id=uid,
                             work_date=day,
-                            description="",
+                            description=description,
                             _existing_records=existing_by_task.get(tid, []),
                         )
                         results["success"] += 1
@@ -756,7 +757,7 @@ class WorktimeManager:
                     hours=hours,
                     user_id=uid,
                     work_date=day,
-                    description="",
+                    description=task_key,  # 无用户进展时以任务名作为工作描述
                     _existing_records=[],  # 已在上方用 existing_set 去重，此处传空跳过内部查询
                 )
                 existing_set.add((uid, task_id, day))  # 更新本地已填集合防止批量内重复
@@ -841,16 +842,33 @@ class WorktimeManager:
 def parse_task_entries(tasks_str: str) -> list:
     """
     解析任务字符串为条目列表。
-    格式: "任务键名:工时,任务键名:工时"
-    示例: "技术中台项目-平台日常管理:1,技术中台项目-基础设施运维:1"
+    格式: "任务键名:工时[:进展],任务键名:工时[:进展]"
+    示例: "技术中台项目-平台日常管理:1:需求开发,技术中台项目-基础设施运维:1"
+    进展可选，省略时填报时自动使用任务名作为描述。
     """
     entries = []
     for part in tasks_str.split(","):
         part = part.strip()
-        if ":" not in part:
+        segments = part.split(":")
+        if len(segments) < 2:
             raise ValueError(f"任务格式错误 '{part}'，需要 '任务名:工时' 格式")
-        key, hours_str = part.rsplit(":", 1)
-        entries.append({"key": key.strip(), "hours": float(hours_str.strip())})
+        # 最后一段是工时，倒数第二段起可能是任务名（含冒号），最后可选进展
+        # 格式: key:hours 或 key:hours:progress
+        # key 本身可能含冒号（如日期），所以从末尾解析
+        if len(segments) == 2:
+            key, hours_str = segments[0], segments[1]
+            progress = ""
+        else:
+            # 尝试: 最后一段不是数字 → 视为进展，倒数第二段为工时
+            if not segments[-1].replace(".", "").isdigit():
+                progress = segments[-1]
+                hours_str = segments[-2]
+                key = ":".join(segments[:-2])
+            else:
+                progress = ""
+                hours_str = segments[-1]
+                key = ":".join(segments[:-1])
+        entries.append({"key": key.strip(), "hours": float(hours_str.strip()), "progress": progress.strip()})
     return entries
 
 
