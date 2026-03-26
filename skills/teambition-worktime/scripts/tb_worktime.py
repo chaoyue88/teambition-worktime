@@ -314,6 +314,11 @@ class WorktimeManager:
             prefix = proj_name + "-"
             if label.startswith(prefix):
                 return label[len(prefix):]
+        # 兜底：项目不在 config 时，_get_task_label 会用原始 ObjectId 作前缀，识别并剥离
+        import re
+        m = re.match(r'^[0-9a-f]{24}-(.+)$', label)
+        if m:
+            return m.group(1)
         return label
 
     # ── 按周填写计划工时（核心功能） ──
