@@ -308,6 +308,14 @@ class WorktimeManager:
         except Exception:
             return task_id
 
+    def _task_name_from_label(self, label: str) -> str:
+        """从 '项目名-任务名' 标签中提取任务名（去掉项目名前缀）"""
+        for proj_name in self.config.get("projects", {}):
+            prefix = proj_name + "-"
+            if label.startswith(prefix):
+                return label[len(prefix):]
+        return label
+
     # ── 按周填写计划工时（核心功能） ──
 
     def fill_weekly_planned(
@@ -581,7 +589,7 @@ class WorktimeManager:
                     continue
 
                 hours = entry["hours"]
-                description = entry.get("progress") or entry["key"]
+                description = entry.get("progress") or self._task_name_from_label(entry["key"])
                 for day in dates:
                     try:
                         self.log_actual_hours(
@@ -757,7 +765,7 @@ class WorktimeManager:
                     hours=hours,
                     user_id=uid,
                     work_date=day,
-                    description=task_key,  # 无用户进展时以任务名作为工作描述
+                    description=self._task_name_from_label(task_key),  # 无用户进展时以任务名（不含项目名）作为工作描述
                     _existing_records=[],  # 已在上方用 existing_set 去重，此处传空跳过内部查询
                 )
                 existing_set.add((uid, task_id, day))  # 更新本地已填集合防止批量内重复
