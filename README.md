@@ -16,6 +16,32 @@ Teambition 工时填报自动化工具，用于在 Teambition 经典版中填写
 * **本地缓存** — 自动缓存成员、项目列表，24 小时过期；任务列表实时查询，不缓存
 * **多人批量** — 一次为多个团队成员填报相同的工时
 
+## 安装
+
+### 方式一：git clone
+
+```bash
+git clone https://github.com/chaoyue88/teambition-worktime ~/.claude/local-skills/teambition-worktime
+```
+
+安装后重启 Claude Code，即可通过自然语言触发（如「帮我填写本周计划工时」）。
+
+### 方式二：在对话框中直接输入
+
+无需手动 clone，在 Claude Code、OpenCode、OpenClaw 等支持 local skills 的工具对话框中输入：
+
+```
+Fetch and follow https://github.com/chaoyue88/teambition-worktime/blob/main/skills/teambition-worktime/SKILL.md
+```
+
+AI 会自动拉取 SKILL.md 并完成 skill 的安装配置。
+
+### 安装 Python 依赖
+
+```bash
+pip install requests PyJWT
+```
+
 ## 快速开始
 
 1. 配置 `~/.teambition/config.json`（参考 `skills/teambition-worktime/references/setup-guide.md`）
